@@ -31,7 +31,7 @@ class Extractor:
         self.scraper = ip_scraper
         self.detector = detector
         self.output_dir = output_dir
-        self.num_workers = workers
+        self.num_workers = int(workers)
 
         # State
         self.active_cameras = []
