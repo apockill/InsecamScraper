@@ -2,7 +2,7 @@ import os
 import hashlib
 from time import sleep
 from pathlib import Path
-from threading import Thread
+from threading import Thread, RLock
 
 import cv2
 import dhash
@@ -11,13 +11,14 @@ from PIL import Image
 
 class Extractor:
     MAX_SAVE_PER_STREAM = 15
-    MAX_BLANK = 10
+    MAX_BLANK = 2
 
-    def __init__(self, class_names, ip_scraper, detector, output_dir, workers):
+    def __init__(self, class_names, ip_addresses, detector, output_dir,
+                 workers):
         """
         :param class_names: A list of strings of classes to search for
             ["person", "car", "dog"]
-        :param ip_scraper: The InseCamScraper object
+        :param ip_addresses: The InseCamScraper object
         :param detector: A detector with a .predict function that returns
             Detection objects
         :param output_dir: Directory to save images to
@@ -27,8 +28,7 @@ class Extractor:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         self.class_names = class_names
-        self.ip_generator = ip_scraper.__iter__()
-        self.scraper = ip_scraper
+        self.ip_generator = ip_addresses.__iter__()
         self.detector = detector
         self.output_dir = output_dir
         self.num_workers = workers
@@ -41,7 +41,7 @@ class Extractor:
         while True:
             # Find inactive cameras and record useful IP's
             inactive_cameras = [cam for cam in self.active_cameras
-                                if not cam.is_alive()]
+                                if not cam.running]
             for cam in inactive_cameras:
                 if cam.saved_count > 0:
                     self.record_ip(cam.url)
@@ -70,8 +70,7 @@ class Extractor:
                 self.active_cameras.append(worker)
                 print("Extractor: Num Workers:", len(self.active_cameras),
                       "Num Buffered IPs:", len(ip_buffer))
-
-            sleep(.1)
+            cv2.waitKey(100)
 
     def record_ip(self, ip):
         with open("./useful_ip_cache.txt", "a+") as f:
@@ -82,7 +81,7 @@ class Extractor:
                 f.write(ip + "\n")
 
 
-
+detector_lock = RLock()
 
 
 class ExtractionWorker(Thread):
@@ -92,10 +91,11 @@ class ExtractionWorker(Thread):
                  max_save):
         super().__init__()
 
-        # Statistics
+        # Statistics/State
         self.blank_count = 0
         self.total_count = 0
         self.saved_count = 0
+        self.running = True
 
         # limits
         self.max_blank = max_blank
@@ -113,24 +113,30 @@ class ExtractionWorker(Thread):
         self.start()
 
     def run(self):
-        cap = cv2.VideoCapture(self.url)
-        sleep(3)
-
         self.blank_count = 0
         self.saved_count = 0
         self.total_count = 0
 
         while self.blank_count < self.max_blank \
                 and self.saved_count < self.max_save:
+
+            # Open the camera, get a frame, then close the stream
+            cap = cv2.VideoCapture(self.url)
             _, frame = cap.read()
-            sleep(1)
+            cap.release()
+
+            # Check to make sure a frame was actually received
             if frame is None:
-                print("Workers: Stopped receiving frames. Received: ",
+                print("Worker: Stopped receiving frames. Received: ",
                       self.total_count, "Saved: ", self.saved_count)
+                self.running = False
                 return
+
             self.total_count += 1
 
-            preds = self.detector.predict([frame])[0]
+            with detector_lock:
+                preds = self.detector.predict([frame])[0]
+
             if any([pred.name in self.class_names for pred in preds]):
                 d_hash = dhash.dhash_int(Image.fromarray(frame),
                                          self.DHASH_SIZE)
@@ -138,16 +144,19 @@ class ExtractionWorker(Thread):
                            str(d_hash) + ".jpg"
                 save_path = Path(self.output_dir) / filename
                 if save_path.exists():
+                    print("Worker: Tried to save image with same path!")
                     self.blank_count += 1
                     continue
 
                 cv2.imwrite(str(save_path), frame)
-                print("Saving!", filename)
+                print("Worker: Saving!", filename)
 
                 self.saved_count += 1
                 self.blank_count = 0
                 continue
 
             self.blank_count += 1
-        print("Worker: Reached maximum frames. Received", self.total_count,
+        print("Worker: Reached maximum frames. "
+              " Received", self.total_count,
               "Saved: ", self.saved_count)
+        self.running = False

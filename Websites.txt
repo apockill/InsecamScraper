@@ -1,7 +1,6 @@
-https://www.insecam.org/en/bytype/DLink/
+https://www.insecam.org/en/bytype/Axis/
 https://www.insecam.org/en/bytype/Foscam/
 https://www.insecam.org/en/bytype/Android-IPWebcam/
-https://www.insecam.org/en/bytype/Axis/
 https://www.insecam.org/en/bytype/Toshiba/
 https://www.insecam.org/en/bytype/Yawcam/
 https://www.insecam.org/en/bytype/WIFICam/
@@ -19,3 +18,4 @@ https://www.insecam.org/en/bytype/Linksys/
 https://www.insecam.org/en/bytype/Hi3516/
 https://www.insecam.org/en/bytype/Axis2/
 https://www.insecam.org/en/bytype/Canon/
+https://www.insecam.org/en/bytype/DLink/

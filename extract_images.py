@@ -16,7 +16,7 @@ if __name__ == "__main__":
                         help="Labels for the ML model")
     parser.add_argument("--save-dir", required=True, type=str,
                         help="Directory to save frames to")
-    parser.add_argument("--num_workers", type=str, default=400,
+    parser.add_argument("--num_workers", type=str, default=750,
                         help="Number of open cameras at any given time")
     parser.add_argument("--class-names", type=list, default=["person"],
                         help="Type of object to search for")
@@ -31,11 +31,10 @@ if __name__ == "__main__":
 
     detector = ObjectDetector.from_path(args.model_path, args.model_labels)
     scraper = InseCamCrawler(args.chromedriver_path, args.url_seeds_file)
-    extractor = Extractor(ip_scraper=scraper,
+    extractor = Extractor(ip_addresses=scraper,
                           class_names=args.class_names,
                           detector=detector,
                           output_dir=args.save_dir,
                           workers=args.num_workers)
-
-
-    extractor.extract()
+    while True:
+        extractor.extract()

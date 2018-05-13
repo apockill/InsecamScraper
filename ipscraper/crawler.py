@@ -77,7 +77,7 @@ class InseCamCrawler:
 
     def _get_page_ips(self, html):
         page_ips = []
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, "html5lib")
         imgs = soup.find_all("img", class_="thumbnail-item__img img-responsive")
         for img in imgs:
             page_ips.append(img["src"])
