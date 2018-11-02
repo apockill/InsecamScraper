@@ -121,7 +121,7 @@ class ExtractionWorker(Thread):
                 and self.saved_count < self.max_save:
 
             # Open the camera, get a frame, then close the stream
-            cap = cv2.VideoCapture(self.url)
+            cap = cv2.VideoCapture(self.url, cv2.CAP_GSTREAMER)
             _, frame = cap.read()
             cap.release()
 
