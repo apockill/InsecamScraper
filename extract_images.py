@@ -29,7 +29,8 @@ if __name__ == "__main__":
                         help="Path to chromedriver.exe, required for scraping")
     args = parser.parse_args()
 
-    detector = ObjectDetector.from_path(args.model_path, args.model_labels)
+    detector = ObjectDetector.from_path(model_path=args.model_path, 
+                                        labels_path=args.model_labels)
     scraper = InseCamCrawler(args.chromedriver_path, args.url_seeds_file)
     extractor = Extractor(ip_addresses=scraper,
                           class_names=args.class_names,

@@ -13,6 +13,7 @@ setup(
                       "selenium",
                       "beautifulsoup4",
                       "dhash",
-                      "pillow"],
+                      "pillow",
+		      "html5lib"],
     zip_safe=False
 )
