@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from ipscraper.extraction import Extractor
 from ipscraper.crawler import InseCamCrawler
 
-from easyinference.models import ObjectDetector
+from easy_inference.models import ObjectDetector
 
 description = ("Scrape insecure camera IP's, load them, read frames, run those "
                "frames through a ML model, and save the interesting frames. ")
